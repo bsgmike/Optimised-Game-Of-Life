@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>879</width>
-    <height>621</height>
+    <width>874</width>
+    <height>638</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,9 +17,9 @@
    <widget class="QWidget" name="horizontalLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>120</x>
-      <y>520</y>
-      <width>330</width>
+      <x>50</x>
+      <y>500</y>
+      <width>395</width>
       <height>41</height>
      </rect>
     </property>
@@ -52,6 +52,9 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QComboBox" name="comboBoxSelectPattern"/>
+     </item>
     </layout>
    </widget>
    <widget class="GraphicsLayoutWidget" name="graphicsView_2">
@@ -59,8 +62,8 @@
      <rect>
       <x>510</x>
       <y>0</y>
-      <width>256</width>
-      <height>239</height>
+      <width>341</width>
+      <height>241</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -86,11 +89,11 @@
      </sizepolicy>
     </property>
    </widget>
-   <widget class="QSlider" name="horizontalSlider">
+   <widget class="QSlider" name="horizontalSliderSetSpeed">
     <property name="geometry">
      <rect>
-      <x>150</x>
-      <y>600</y>
+      <x>100</x>
+      <y>560</y>
       <width>271</width>
       <height>16</height>
      </rect>
@@ -98,6 +101,42 @@
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
     </property>
+    <property name="invertedAppearance">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QScrollArea" name="scrollArea">
+    <property name="geometry">
+     <rect>
+      <x>510</x>
+      <y>250</y>
+      <width>341</width>
+      <height>321</height>
+     </rect>
+    </property>
+    <property name="widgetResizable">
+     <bool>true</bool>
+    </property>
+    <widget class="QWidget" name="scrollAreaWidgetContents">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>339</width>
+       <height>319</height>
+      </rect>
+     </property>
+     <widget class="QTextEdit" name="textEditDebugInfo">
+      <property name="geometry">
+       <rect>
+        <x>3</x>
+        <y>0</y>
+        <width>321</width>
+        <height>301</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -105,8 +144,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>879</width>
-     <height>20</height>
+     <width>874</width>
+     <height>21</height>
     </rect>
    </property>
   </widget>
