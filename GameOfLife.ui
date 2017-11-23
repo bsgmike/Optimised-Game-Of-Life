@@ -6,53 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>988</width>
-    <height>686</height>
+    <width>879</width>
+    <height>621</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Mikes Game Of Life</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="horizontalLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>270</x>
-      <y>160</y>
-      <width>521</width>
-      <height>191</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="GraphicsLayoutWidget" name="graphicsView">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="GraphicsLayoutWidget" name="graphicsView_2">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
    <widget class="QWidget" name="horizontalLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>210</x>
-      <y>440</y>
-      <width>166</width>
-      <height>80</height>
+      <x>120</x>
+      <y>520</y>
+      <width>330</width>
+      <height>41</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -64,13 +32,72 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>PushButton</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="buttonClear">
        <property name="text">
         <string>Clear</string>
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QPushButton" name="buttonRandomFill">
+       <property name="text">
+        <string>Random Fill</string>
+       </property>
+      </widget>
+     </item>
     </layout>
+   </widget>
+   <widget class="GraphicsLayoutWidget" name="graphicsView_2">
+    <property name="geometry">
+     <rect>
+      <x>510</x>
+      <y>0</y>
+      <width>256</width>
+      <height>239</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+   </widget>
+   <widget class="GraphicsLayoutWidget" name="graphicsView">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>500</width>
+      <height>500</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+   </widget>
+   <widget class="QSlider" name="horizontalSlider">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>600</y>
+      <width>271</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -78,7 +105,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>988</width>
+     <width>879</width>
      <height>20</height>
     </rect>
    </property>
