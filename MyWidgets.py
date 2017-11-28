@@ -151,6 +151,19 @@ class LabelledButton2(QWidget):
         painter.setBrush(QColor("#ffffff"))
         painter.drawRect(0, 0, self.width(), self.height())
 
+class RummyPiece(QPushButton):
+    def __init__(self, legend):
+        super(RummyPiece, self).__init__()
+
+        self.setFixedWidth(30)
+        self.setFixedHeight(45)
+        self.setDragEnabled(True)
+        self.setText("3")
+
+        
+
+
+
 class ImageLabel(QLabel):
     def __init__(self, img):
         super(ImageLabel, self).__init__()
