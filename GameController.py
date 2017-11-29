@@ -1,18 +1,17 @@
 import sys
 import MyWidgets
 import os
-
+import GridType1
 import pyqtgraph as pg
 import numpy as np
 
 from PyQt5 import uic
-from PyQt5.QtCore import Qt, QRectF, pyqtSignal, QT_VERSION_STR, QPoint, QDir, QEvent
+from PyQt5.QtCore import Qt
 
-from PyQt5.QtGui import QImage, QPixmap, QPainterPath, QPainter, QFont, QIcon, QPalette, QColor, QLinearGradient
+from PyQt5.QtGui import  QFont, QIcon, QPalette, QColor, QLinearGradient
 
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QTreeView, QFileSystemModel, QLineEdit, \
-    QLabel, QFrame, QTextEdit, QHBoxLayout, QGridLayout, QVBoxLayout, QMainWindow, QAction, QTableView, QTabWidget, QMessageBox, \
-    QComboBox, QStyleFactory, QCheckBox, QFileDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QTextEdit, QHBoxLayout, QVBoxLayout, QMainWindow, QAction
+
 
 class MyButton(QPushButton):
     def __init__(self, text):
@@ -37,6 +36,19 @@ class MyButton(QPushButton):
 class MainWin(QMainWindow):
     def __init__(self):
         super(MainWin, self).__init__()
+        self.columnSize = 40
+        self.rowSize = self.columnSize
+        self.xInitPos = 0
+        self.yInitPos = 0
+        self.state = GridType1.gridType1(self.rowSize, self.columnSize)
+        self.dataPlot = pg.ScatterPlotItem()
+        self.pause = True
+        self.generation = 0
+        self.color1 = pg.mkBrush("#E8DB9A")
+        self.color2 = pg.mkBrush("#132DFF")
+        self.brushes = []
+        self.cells = []
+        self.alive = 0
 
         # self.ui = uic.loadUi('GameOfLife.ui', self)
         # self.ui.actionQuit.triggered.connect(self.close_application)
@@ -45,6 +57,7 @@ class MainWin(QMainWindow):
         # Create Toolbar
         # +++++++++++++++++++++++++++++++++++++++++++++
         self.actionQuit = QAction(QIcon('icons/exit.png'), 'Close the application', self)
+
         self.actionQuit.triggered.connect(self.close_application)
         self.toolBar = self.addToolBar("GameOfLifeToolbar")
         self.toolBar.addAction(self.actionQuit)
@@ -63,14 +76,17 @@ class MainWin(QMainWindow):
         # Create Buttons
         # +++++++++++++++++++++++++++++++++++++++++++++
         self.clearButton = QPushButton("Clear")
-        self.startStopButton = MyButton("Start")
-        self.randomFillButton = MyButton("Random Fill")
-        self.SavePathButton = MyWidgets.LabelledButton("Save To...")
+        self.startStopButton = QPushButton("Start")
+        self.randomFillButton = QPushButton("Random Fill")
+        # self.SavePathButton = MyWidgets.LabelledButton("Save To...")
+        self.generationCountLabel = MyWidgets.InformationLabel("Generation Count")
+        self.generationCountLabel.updateText(str(self.generation))
 
         # ++++++++++++++++++++++++++++++++++++++++++++++++++
         # Connect the controls to handlers
         # ++++++++++++++++++++++++++++++++++++++++++++++++++
         self.clearButton.clicked.connect(self.clearGrid)
+        self.startStopButton.clicked.connect(self.startPause)
 
         # ++++++++++++++++++++++++++++++++++++++++++++++++++
         # Add buttons to the button bar
@@ -78,7 +94,8 @@ class MainWin(QMainWindow):
         self.buttonLayout.addWidget(self.clearButton)
         self.buttonLayout.addWidget(self.startStopButton)
         self.buttonLayout.addWidget(self.randomFillButton)
-        self.buttonLayout.addWidget(self.SavePathButton)
+        self.buttonLayout.addWidget(self.generationCountLabel)
+        # self.buttonLayout.addWidget(self.SavePathButton)
 
         # ++++++++++++++++++++++++++++++++++++++++++++++++++
         # Create the main grid view
@@ -126,22 +143,32 @@ class MainWin(QMainWindow):
         self.setCentralWidget(self.mainWidget)
 
         self.gfx = self.mainGridView.addPlot()
-        # self.gfx = self.ui.graphicsView.addPlot()
         self.restartPlot()
+        self.createGrid()
+        self.updateGrid()
 
-
+        # Generation Timer
+        self.timer = pg.QtCore.QTimer()
+        self.timer.timeout.connect(self.updateTimer)
+        self.TIME_INTERVAL = 100
+        self.TIME_INTERVAL_MAX = 200
 
     def restartPlot(self):
         self.mainGridView.removeItem(self.gfx)
         self.gfx = self.mainGridView.addPlot()
-        self.datos = pg.ScatterPlotItem()
-        self.gfx.addItem(self.datos)
+        self.dataPlot = pg.ScatterPlotItem()
+        self.gfx.addItem(self.dataPlot)
         self.gfx.hideAxis('bottom')
         self.gfx.hideAxis('left')
-        self.gfx.setXRange(1,0)
-        self.gfx.setYRange(1,0)
+        self.gfx.setXRange(1, 0)
+        self.gfx.setYRange(1, 0)
         self.gfx.setMouseEnabled(x=False, y=False)
-        self.gfx.enableAutoRange(x=True,y=True)
+        self.gfx.enableAutoRange(x=True, y=True)
+
+    def updateTimer(self):
+        if self.pause == False:
+            self.nextState()
+            self.timer.start(self.TIME_INTERVAL)
 
     def close_application(self):
         print("Exiting now...")
@@ -150,6 +177,73 @@ class MainWin(QMainWindow):
     def clearGrid(self):
         print("Clearing the grid now...")
 
+    def startPause(self):
+        if self.pause:
+            self.pause = False
+            self.updateTimer()
+            print("start")
+        else:
+            self.pause = True
+            print("stop")
+
+    def nextState(self):
+        self.state.tick()
+        self.updateGrid()
+        linea = '# Generacion: '+str(self.generation)+'     # Celdas Vivas: '+str(self.alive)
+        # self.ui.infoBox.append(linea)
+        # self.aliveEvolution.append(self.alive)
+        # self.restartPlot2()
+        self.generation += 1
+        self.generationCountLabel.updateText(str(self.generation))
+
+    def clicked(self, plot, points):
+        x, y = points[0].pos()
+        x = int(x - 0.5)
+        y = int(y - 1.5)
+        print("cell selected: pos= ", x, " : ", y, "\n")
+        if self.state.prevState[self.rowSize - 1 - y, x] == 1:
+            self.state.prevState[self.rowSize - 1 - y, x] = 0
+        else:
+            self.state.prevState[self.rowSize - 1 - y, x] = 1
+        self.updateGrid()
+
+    def createGrid(self):
+        self.pause = True
+        self.generation = 0
+        self.cells = []
+        self.brushes = []
+        self.dataPlot.clear()
+        self.state = GridType1.gridType1(self.rowSize, self.columnSize)
+
+        for i in range(self.rowSize):
+            for j in range(self.columnSize):
+                if self.state.prevState[i, j] == 0:
+                    self.brushes.append(self.color1)
+                else:
+                    self.brushes.append(self.color2)
+                self.cells.append({'pos': (j + 0.5, self.rowSize - i + 0.5),
+                                   'size': 500 / self.rowSize,
+                                   'symbol': 's',
+                                   'brush': self.brushes[-1],
+                                   'pen': {'color': (0, 0, 0),
+                                           'width': 0.5},
+                                   })
+
+        self.dataPlot.addPoints(self.cells)
+        self.dataPlot.sigClicked.connect(self.clicked)
+
+    def updateGrid(self):
+        ctr = 0
+        self.alive = 0
+        for i in range(self.rowSize):
+            for j in range(self.columnSize):
+                if self.state.prevState[i,j] == 0:
+                    self.brushes[ctr] = self.color1
+                else:
+                    self.brushes[ctr] = self.color2
+                    self.alive += 1
+                ctr += 1
+        self.dataPlot.setBrush(self.brushes, mask=None)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
