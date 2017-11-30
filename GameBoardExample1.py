@@ -4,11 +4,16 @@ from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import QPropertyAnimation, QRect
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QTreeView, QFileSystemModel, QLineEdit, \
     QLabel, QFrame, QTextEdit, QHBoxLayout, QGridLayout, QVBoxLayout, QMainWindow, QAction, QTableView, QTabWidget, QMessageBox, \
-    QComboBox, QStyleFactory, QCheckBox, QFileDialog, QFontComboBox
+    QComboBox, QStyleFactory, QCheckBox, QFileDialog, QFontComboBox, QLabel
 
 import MyWidgets
 
-class DragLabel(QtGui.QLabel):
+"""
+the drag and drop technique I'm using has been borrowed from the pyqt examples
+https://doc.qt.io/qt-5/qtwidgets-draganddrop-fridgemagnets-example.html
+"""
+
+class DragLabel(QLabel):
     def __init__(self, text, parent):
         super(DragLabel, self).__init__(parent)
 
@@ -59,7 +64,7 @@ class DragLabel(QtGui.QLabel):
         else:
             self.show()
 
-class DragWidget(QtGui.QWidget):
+class DragWidget(QWidget):
     def __init__(self, parent=None):
         super(DragWidget, self).__init__(parent)
 
@@ -173,15 +178,7 @@ class PlayerGrid(QFrame):
     def __init__(self):
         super(PlayerGrid, self).__init__()
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
-
-        self.exampleRummyPiece = MyWidgets.RummyPiece("3")
-        self.exampleRummyPiece.dra
-
-        QRect = self.contentsRect()
-
         self.tileGrid = QGridLayout()
-
-        self.tileGrid.addWidget(self.exampleRummyPiece, 0, 0)
         self.setLayout(self.tileGrid)
 
 class FontSelector(QWidget):
