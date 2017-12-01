@@ -1,26 +1,41 @@
 import sys
 from PyQt5 import QtGui, QtCore
 
-from PyQt5.QtCore import QPropertyAnimation, QRect
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QTreeView, QFileSystemModel, QLineEdit, \
     QLabel, QFrame, QTextEdit, QHBoxLayout, QGridLayout, QVBoxLayout, QMainWindow, QAction, QTableView, QTabWidget, QMessageBox, \
     QComboBox, QStyleFactory, QCheckBox, QFileDialog, QFontComboBox
 
-import MyWidgets
+from PyQt5.QtGui import QFont
 
-class DragLabel(QtGui.QLabel):
+from PyQt5.QtCore import QRect, QPoint
+
+
+# ++++++++++++++++++++++++++++++++++++++++++++++
+#          GLOBALS
+# ++++++++++++++++++++++++++++++++++++++++++++++
+tileColors = ["red", "black", "blue", "yellow"]
+tileValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+
+class DragLabel(QLabel):
     def __init__(self, text, parent):
         super(DragLabel, self).__init__(parent)
 
+        tileFont = QFont("Consolas", 10)
+        self.setFont(tileFont)
         metric = QtGui.QFontMetrics(self.font())
         size = metric.size(QtCore.Qt.TextSingleLine, text)
 
+        self.width = 30
+        self.height = 40
+
         image = QtGui.QImage(size.width() + 12, size.height() + 12,
                 QtGui.QImage.Format_ARGB32_Premultiplied)
+
+        # image = QtGui.QImage(self.width, self.height, QtGui.QImage.Format_ARGB32_Premultiplied)
         image.fill(QtGui.qRgba(0, 0, 0, 0))
 
-        font = QtGui.QFont()
-        font.setStyleStrategy(QtGui.QFont.ForceOutline)
+        # font = QtGui.QFont()
+        # font.setStyleStrategy(QtGui.QFont.ForceOutline)
 
         painter = QtGui.QPainter()
         painter.begin(image)
@@ -29,10 +44,10 @@ class DragLabel(QtGui.QLabel):
         painter.drawRoundedRect(QtCore.QRectF(0.5, 0.5, image.width()-1,
                 image.height()-1), 25, 25, QtCore.Qt.RelativeSize)
 
-        painter.setFont(font)
+        painter.setFont(tileFont)
         painter.setBrush(QtCore.Qt.black)
-        painter.drawText(QtCore.QRect(QtCore.QPoint(6, 6), size),
-                QtCore.Qt.AlignCenter, text)
+
+        painter.drawText(QRect(QPoint(6, 6), size), QtCore.Qt.AlignCenter, text)
         painter.end()
 
         self.setPixmap(QtGui.QPixmap.fromImage(image))
@@ -59,9 +74,9 @@ class DragLabel(QtGui.QLabel):
         else:
             self.show()
 
-class DragWidget(QtGui.QWidget):
-    def __init__(self, parent=None):
-        super(DragWidget, self).__init__(parent)
+class RummyTile(QWidget):
+    def __init__(self, value):
+        super(RummyTile, self).__init__()
 
         dictionaryFile = QtCore.QFile(':/dictionary/words.txt')
         dictionaryFile.open(QtCore.QFile.ReadOnly)
@@ -69,21 +84,24 @@ class DragWidget(QtGui.QWidget):
         x = 5
         y = 5
 
-        for word in QtCore.QTextStream(dictionaryFile).readAll().split():
-            wordLabel = DragLabel(word, self)
-            wordLabel.move(x, y)
-            wordLabel.show()
-            x += wordLabel.width() + 2
-            if x >= 245:
-                x = 5
-                y += wordLabel.height() + 2
+        self.tileLabel = DragLabel(str(value), self)
+        self.show()
 
-        newPalette = self.palette()
-        newPalette.setColor(QtGui.QPalette.Window, QtCore.Qt.white)
-        self.setPalette(newPalette)
-
-        self.setMinimumSize(400, max(200, y))
-        self.setWindowTitle("Fridge Magnets")
+        # # for word in QtCore.QTextStream(dictionaryFile).readAll().split():
+        # #     wordLabel = DragLabel(word, self)
+        # #     wordLabel.move(x, y)
+        # #     wordLabel.show()
+        # #     x += wordLabel.width() + 2
+        # #     if x >= 245:
+        # #         x = 5
+        # #         y += wordLabel.height() + 2
+        #
+        # newPalette = self.palette()
+        # newPalette.setColor(QtGui.QPalette.Window, QtCore.Qt.white)
+        # self.setPalette(newPalette)
+        #
+        # self.setMinimumSize(400, max(200, y))
+        # self.setWindowTitle("Fridge Magnets")
         self.setAcceptDrops(True)
 
     def dragEnterEvent(self, event):
@@ -159,7 +177,29 @@ class MainWin(QMainWindow):
 
         self.setCentralWidget(self.mainWidget)
 
-        self.setGeometry(300, 300, 550, 500)
+        self.setGeometry(200, 200, 850, 500)
+
+
+class BoardCell(QFrame):
+    def __init__(self, row, col):
+        super(BoardCell, self).__init__()
+        self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        self.layout = QVBoxLayout()
+        # self.layout.setContentsMargins(left, top, right, bottom)
+        self.layout.setContentsMargins(4, 4, 4, 4)
+        self.setLayout(self.layout)
+        self.setMinimumHeight(40)
+        self.setMinimumWidth(30)
+        self.row = row
+        self.col = col
+
+        self.setMouseTracking(True)
+
+    def enterEvent(self, a0: QtCore.QEvent):
+        print("Mouse entered", self.row, self.col)
+
+    def addTile(self, RummyTile):
+        self.layout.addWidget(RummyTile)
 
 
 
@@ -168,20 +208,52 @@ class GameBoard(QFrame):
     def __init__(self):
         super(GameBoard, self).__init__()
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        self.tileGrid = QGridLayout()
+        self.rows = 6
+        self.cols = 25
+        row = 0
+        col = 0
+        for tileColor in tileColors:
+            for tileVal in tileValues:
+                newCell = BoardCell(row, col)
+                newCell.addTile(RummyTile(tileVal))
+                self.tileGrid.addWidget(newCell, row, col)  # i=row j=col
+                col = col + 1
+            row = row + 1
+            col = 0
+
+
+        # for i in range(1, self.rows):
+        #     for j in range(1, self.cols):
+        #         newCell = BoardCell(i,j)
+        #         newCell.addTile(RummyTile(0))
+        #         self.tileGrid.addWidget(newCell, i, j) #i=row j=col
+
+        self.setLayout(self.tileGrid)
+        self.listItems()
+
+
+
+
+    def listItems(self):
+        print("List grid contents")
+        cellsList = self.findChildren(BoardCell)
+        for cell in cellsList:
+            print(cell.row, cell.col)
+
 
 class PlayerGrid(QFrame):
     def __init__(self):
         super(PlayerGrid, self).__init__()
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
 
-        self.exampleRummyPiece = MyWidgets.RummyPiece("3")
-        self.exampleRummyPiece.dra
+
 
         QRect = self.contentsRect()
 
         self.tileGrid = QGridLayout()
 
-        self.tileGrid.addWidget(self.exampleRummyPiece, 0, 0)
+
         self.setLayout(self.tileGrid)
 
 class FontSelector(QWidget):

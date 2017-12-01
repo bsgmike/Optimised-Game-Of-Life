@@ -157,7 +157,7 @@ class RummyPiece(QPushButton):
 
         self.setFixedWidth(30)
         self.setFixedHeight(45)
-        self.setDragEnabled(True)
+        # self.setDragEnabled(True)
         self.setText("3")
 
         
