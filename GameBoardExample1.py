@@ -1,4 +1,4 @@
-import sys
+import sys, random
 from PyQt5 import QtGui, QtCore
 
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QTreeView, QFileSystemModel, QLineEdit, \
@@ -14,22 +14,24 @@ from PyQt5.QtCore import QRect, QPoint
 #          GLOBALS
 # ++++++++++++++++++++++++++++++++++++++++++++++
 tileColors = ["red", "black", "blue", "yellow"]
+tileOwner = ["player", "board", "bag"]
 tileValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+tileBag = []
 
 class DragLabel(QLabel):
-    def __init__(self, text, parent):
+    def __init__(self, color, text, parent):
         super(DragLabel, self).__init__(parent)
-
+        widthText = "13"
         tileFont = QFont("Consolas", 10)
         self.setFont(tileFont)
         metric = QtGui.QFontMetrics(self.font())
-        size = metric.size(QtCore.Qt.TextSingleLine, text)
+        size = metric.size(QtCore.Qt.TextSingleLine, widthText)
 
-        self.width = 30
-        self.height = 40
 
-        image = QtGui.QImage(size.width() + 12, size.height() + 12,
+
+        image = QtGui.QImage(size.width() + 12, size.height() + 22,
                 QtGui.QImage.Format_ARGB32_Premultiplied)
+
 
         # image = QtGui.QImage(self.width, self.height, QtGui.QImage.Format_ARGB32_Premultiplied)
         image.fill(QtGui.qRgba(0, 0, 0, 0))
@@ -45,7 +47,14 @@ class DragLabel(QLabel):
                 image.height()-1), 25, 25, QtCore.Qt.RelativeSize)
 
         painter.setFont(tileFont)
-        painter.setBrush(QtCore.Qt.black)
+        if color == "red":
+            painter.setBrush(QtCore.Qt.red)
+        elif color == "blue":
+            painter.setBrush(QtCore.Qt.blue)
+        elif color == "yellow":
+            painter.setBrush(QtCore.Qt.yellow)
+        else:
+            painter.setBrush(QtCore.Qt.black)
 
         painter.drawText(QRect(QPoint(6, 6), size), QtCore.Qt.AlignCenter, text)
         painter.end()
@@ -75,7 +84,7 @@ class DragLabel(QLabel):
             self.show()
 
 class RummyTile(QWidget):
-    def __init__(self, value):
+    def __init__(self, value, color):
         super(RummyTile, self).__init__()
 
         dictionaryFile = QtCore.QFile(':/dictionary/words.txt')
@@ -84,8 +93,8 @@ class RummyTile(QWidget):
         x = 5
         y = 5
 
-        self.tileLabel = DragLabel(str(value), self)
-        self.show()
+        self.tileLabel = DragLabel(color, str( value), self)
+        # self.show()
 
         # # for word in QtCore.QTextStream(dictionaryFile).readAll().split():
         # #     wordLabel = DragLabel(word, self)
@@ -179,6 +188,27 @@ class MainWin(QMainWindow):
 
         self.setGeometry(200, 200, 850, 500)
 
+        self.fillTileBag()
+
+    def fillTileBag(self):
+        for tileColor in tileColors:
+            for tileVal in tileValues:
+                newCell = BoardCell(0, 0)
+                newCell.addTile(RummyTile(tileColor, tileVal))
+                tileBag.append(newCell)
+        print("finished filling tile bag")
+
+class TileBag():
+    def __init__(self, row, col):
+        for tileColor in tileColors:
+            for tileVal in tileValues:
+                newCell = BoardCell(0, 0)
+                newCell.addTile(RummyTile(tileColor, tileVal))
+                tileBag.append(newCell)
+        random.shuffle(tileBag)
+        print("finished filling tile bag")
+
+
 
 class BoardCell(QFrame):
     def __init__(self, row, col):
@@ -188,8 +218,8 @@ class BoardCell(QFrame):
         # self.layout.setContentsMargins(left, top, right, bottom)
         self.layout.setContentsMargins(4, 4, 4, 4)
         self.setLayout(self.layout)
-        self.setMinimumHeight(40)
-        self.setMinimumWidth(30)
+        self.setMinimumHeight(48)
+        self.setMinimumWidth(38)
         self.row = row
         self.col = col
 
@@ -200,8 +230,6 @@ class BoardCell(QFrame):
 
     def addTile(self, RummyTile):
         self.layout.addWidget(RummyTile)
-
-
 
 
 class GameBoard(QFrame):
@@ -216,7 +244,7 @@ class GameBoard(QFrame):
         for tileColor in tileColors:
             for tileVal in tileValues:
                 newCell = BoardCell(row, col)
-                newCell.addTile(RummyTile(tileVal))
+                newCell.addTile(RummyTile(tileColor, tileVal))
                 self.tileGrid.addWidget(newCell, row, col)  # i=row j=col
                 col = col + 1
             row = row + 1
@@ -232,9 +260,6 @@ class GameBoard(QFrame):
         self.setLayout(self.tileGrid)
         self.listItems()
 
-
-
-
     def listItems(self):
         print("List grid contents")
         cellsList = self.findChildren(BoardCell)
@@ -246,8 +271,6 @@ class PlayerGrid(QFrame):
     def __init__(self):
         super(PlayerGrid, self).__init__()
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
-
-
 
         QRect = self.contentsRect()
 
