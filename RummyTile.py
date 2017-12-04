@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QTreeView, QFile
     QMessageBox, \
     QComboBox, QStyleFactory, QCheckBox, QFileDialog, QFontComboBox
 
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QColor
 
 from PyQt5.QtCore import QRect, QPoint
 
@@ -46,17 +46,18 @@ class DragLabel(QLabel):
             painter.setBrush(QtCore.Qt.blue)
             painter.setPen(QtCore.Qt.blue)
         elif color == "yellow":
-            painter.setBrush(QtCore.Qt.green)
-            painter.setPen(QtCore.Qt.green)
+            painter.setBrush(QtCore.Qt.yellow)
+            painter.setPen(QtCore.Qt.yellow)
         else:
             painter.setBrush(QtCore.Qt.black)
             painter.setPen(QtCore.Qt.black)
 
 
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
-        painter.setBrush(QtCore.Qt.white)
+        # painter.setBrush(QtCore.Qt.white)
+        painter.setBrush(QColor('#999999'))
         painter.drawRoundedRect(QtCore.QRectF(0.5, 0.5, image.width() - 1,
-                                              image.height() - 1), 25, 25, QtCore.Qt.RelativeSize)
+                                              image.height() - 4), 30, 30, QtCore.Qt.RelativeSize)
 
         painter.setFont(tileFont)
 
@@ -69,19 +70,32 @@ class DragLabel(QLabel):
         self.setPixmap(QtGui.QPixmap.fromImage(image))
         self.labelText = text
 
+
+
+
+class RummyTile(QWidget):
+    def __init__(self, color, value):
+        super(RummyTile, self).__init__()
+        self.tileLabel = DragLabel(color, str(value), self)
+
+        self.color = color
+        self.value = value
+        self.owner = "bag"
+        self.setObjectName("rummyTile")
+
     def mousePressEvent(self, event):
         itemData = QtCore.QByteArray()
         dataStream = QtCore.QDataStream(itemData, QtCore.QIODevice.WriteOnly)
-        dataStream << QtCore.QByteArray(self.labelText) << QtCore.QPoint(event.pos() - self.rect().topLeft())
+        dataStream  << QtCore.QPoint(event.pos() - self.rect().topLeft())
 
         mimeData = QtCore.QMimeData()
         mimeData.setData('application/x-fridgemagnet', itemData)
-        mimeData.setText(self.labelText)
+        # mimeData.setText(self.labelText)
 
         drag = QtGui.QDrag(self)
         drag.setMimeData(mimeData)
         drag.setHotSpot(event.pos() - self.rect().topLeft())
-        drag.setPixmap(self.pixmap())
+        drag.setPixmap(self.tileLabel.pixmap())
 
         self.hide()
 
@@ -89,72 +103,6 @@ class DragLabel(QLabel):
             self.close()
         else:
             self.show()
-
-
-class RummyTile(QWidget):
-    def __init__(self, color, value):
-        super(RummyTile, self).__init__()
-        self.tileLabel = DragLabel(color, str(value), self)
-        self.setAcceptDrops(True)
-        self.color = color
-        self.value = value
-        self.owner = "bag"
-        self.setObjectName("rummyTile")
-
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasFormat('application/x-fridgemagnet'):
-            if event.source() in self.children():
-                event.setDropAction(QtCore.Qt.MoveAction)
-                event.accept()
-            else:
-                event.acceptProposedAction()
-        elif event.mimeData().hasText():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
-
-    dragMoveEvent = dragEnterEvent
-
-    def dropEvent(self, event):
-        if event.mimeData().hasFormat('application/x-fridgemagnet'):
-            mime = event.mimeData()
-            itemData = mime.data('application/x-fridgemagnet')
-            dataStream = QtCore.QDataStream(itemData, QtCore.QIODevice.ReadOnly)
-
-            text = QtCore.QByteArray()
-            offset = QtCore.QPoint()
-            dataStream >> text >> offset
-
-            try:
-                # Python v3.
-                text = str(text, encoding='latin1')
-            except TypeError:
-                # Python v2.
-                text = str(text)
-
-            newLabel = DragLabel(text, self)
-            newLabel.move(event.pos() - offset)
-            newLabel.show()
-
-            if event.source() in self.children():
-                event.setDropAction(QtCore.Qt.MoveAction)
-                event.accept()
-            else:
-                event.acceptProposedAction()
-        elif event.mimeData().hasText():
-            pieces = event.mimeData().text().split()
-            position = event.pos()
-
-            for piece in pieces:
-                newLabel = DragLabel(piece, self)
-                newLabel.move(position)
-                newLabel.show()
-
-                position += QtCore.QPoint(newLabel.width(), 0)
-
-            event.acceptProposedAction()
-        else:
-            event.ignore()
 
     def getColor(self):
         return self.color

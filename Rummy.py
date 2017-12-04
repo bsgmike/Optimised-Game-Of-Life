@@ -4,7 +4,7 @@ from RummyTile import RummyTile
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QTreeView, QFileSystemModel, QLineEdit, \
     QLabel, QFrame, QTextEdit, QHBoxLayout, QGridLayout, QVBoxLayout, QMainWindow, QFontComboBox, QPlainTextEdit
 
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QColor
 
 from PyQt5.QtCore import QRect, QPoint
 
@@ -102,7 +102,8 @@ class ControlPanel(QFrame):
 class BoardCell(QFrame):
     def __init__(self, row, col):
         super(BoardCell, self).__init__()
-        self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        # self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        self.setFrameStyle(QFrame.Box)
         self.layout = QVBoxLayout()
         # self.layout.setContentsMargins(left, top, right, bottom)
         self.layout.setContentsMargins(4, 4, 4, 4)
@@ -114,7 +115,14 @@ class BoardCell(QFrame):
         self.row = row
         self.col = col
 
+        pal = self.palette()
+        pal.setColor(self.backgroundRole(), QColor('#888844'))
+        pal.setColor(self.foregroundRole(), QColor('#999955'))  # 6600cc
+        self.setPalette(pal)
+        self.setAutoFillBackground(True)
+
         self.setMouseTracking(True)
+        self.setAcceptDrops(True)
 
     def mousePressEvent(self, QMouseEvent):
         print(QMouseEvent.pos())
@@ -143,6 +151,62 @@ class BoardCell(QFrame):
     def getPosition(self):
         return self.row, self.col
 
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasFormat('application/x-fridgemagnet'):
+            if event.source() in self.children():
+                event.setDropAction(QtCore.Qt.MoveAction)
+                event.accept()
+            else:
+                event.acceptProposedAction()
+        elif event.mimeData().hasText():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    dragMoveEvent = dragEnterEvent
+
+    def dropEvent(self, event):
+        if event.mimeData().hasFormat('application/x-fridgemagnet'):
+            mime = event.mimeData()
+            itemData = mime.data('application/x-fridgemagnet')
+            dataStream = QtCore.QDataStream(itemData, QtCore.QIODevice.ReadOnly)
+
+            text = QtCore.QByteArray()
+            offset = QtCore.QPoint()
+            dataStream >> text >> offset
+
+            try:
+                # Python v3.
+                text = str(text, encoding='latin1')
+            except TypeError:
+                # Python v2.
+                text = str(text)
+
+            # newLabel = RummyTile.DragLabel(text, self)
+            newTile = RummyTile("red", 1)
+            self.layout.addWidget(newTile)
+
+
+            if event.source() in self.children():
+                event.setDropAction(QtCore.Qt.MoveAction)
+                event.accept()
+            else:
+                event.acceptProposedAction()
+        elif event.mimeData().hasText():
+            pieces = event.mimeData().text().split()
+            position = event.pos()
+
+            for piece in pieces:
+                newLabel = RummyTile.DragLabel(piece, self)
+                newLabel.move(position)
+                newLabel.show()
+
+                position += QtCore.QPoint(newLabel.width(), 0)
+
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
 class GameBoard(QFrame):
     def __init__(self):
         super(GameBoard, self).__init__()
@@ -153,6 +217,12 @@ class GameBoard(QFrame):
         self.rows = 8
         self.cols = 30
         self.cellList = []
+
+        pal = self.palette()
+        pal.setColor(self.backgroundRole(), QColor('#888844'))
+        pal.setColor(self.foregroundRole(), QColor('#888844'))  # 6600cc
+        self.setPalette(pal)
+        self.setAutoFillBackground(True)
 
         for row in range(self.rows):
             for col in range(self.cols):
