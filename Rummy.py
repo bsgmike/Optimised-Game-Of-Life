@@ -122,6 +122,7 @@ class BoardCell(QFrame):
 
     def enterEvent(self, a0: QtCore.QEvent):
         print("Mouse entered", self.row, self.col)
+        self.getCellStatus()
 
     def addTile(self, RummyTile):
         self.layout.addWidget(RummyTile)
@@ -130,15 +131,14 @@ class BoardCell(QFrame):
         self.layout.removeWidget(RummyTile)
 
     def getCellStatus(self):
-        print("getCellStatus")
         cellContents = self.findChild(RummyTile)
 
         if cellContents == None:
-            print("getCellStatus this cell is empty")
+            print("Cell Status: this cell is empty")
             return "Empty"
-        # else:
-        #     print("getCellStatus found a tile:-", cellContents.color, cellContents.value)
-        #     return cellContents
+        else:
+            print("Cell Status::-", cellContents.color, cellContents.value)
+            return cellContents.color, cellContents.value
 
     def getPosition(self):
         return self.row, self.col
@@ -194,8 +194,7 @@ class GameBoard(QFrame):
         for cell in self.cellList:
             status = cell.getCellStatus()
             if status == "Empty":
-                row, col = cell.getPosition()
-                self.tileGrid.addWidget(tile, row, col)
+                cell.addTile(tile)
                 break
 
     def GetNextEmptyCellPosition(self):

@@ -49,8 +49,8 @@ class DragLabel(QLabel):
             painter.setBrush(QtCore.Qt.green)
             painter.setPen(QtCore.Qt.green)
         else:
-            painter.setBrush(QtCore.Qt.blue)
-            painter.setPen(QtCore.Qt.blue)
+            painter.setBrush(QtCore.Qt.black)
+            painter.setPen(QtCore.Qt.black)
 
 
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
