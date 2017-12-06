@@ -82,18 +82,20 @@ class RummyTile(QWidget):
         self.value = value
         self.owner = "bag"
         self.setObjectName("rummyTile")
+        self.cellListIndex = 0
+        self.labelText = "hello world"
 
     def mousePressEvent(self, event):
-        itemData = QtCore.QByteArray()
-        dataStream = QtCore.QDataStream(itemData, QtCore.QIODevice.WriteOnly)
-        dataStream  << QtCore.QPoint(event.pos() - self.rect().topLeft())
-
-        mimeData = QtCore.QMimeData()
-        mimeData.setData('application/x-fridgemagnet', itemData)
-        # mimeData.setText(self.labelText)
-
+        # itemData = QtCore.QByteArray()
+        # dataStream = QtCore.QDataStream(itemData, QtCore.QIODevice.WriteOnly)
+        # dataStream << QtCore.QByteArray(self.labelText) << QtCore.QPoint(event.pos() - self.rect().topLeft())
+        #
+        # mimeData = QtCore.QMimeData()
+        # mimeData.setData('application/x-fridgemagnet', itemData)
+        # mimeData.setText(self.cellListIndex)
+        #
         drag = QtGui.QDrag(self)
-        drag.setMimeData(mimeData)
+        # drag.setMimeData(mimeData)
         drag.setHotSpot(event.pos() - self.rect().topLeft())
         drag.setPixmap(self.tileLabel.pixmap())
 
@@ -110,12 +112,11 @@ class RummyTile(QWidget):
     def getValue(self):
         return self.value
 
+    def setCellListIndex(self, listIndex):
+        self.cellListIndex = listIndex
 
-
-
-
-
-
+    def getCellListIndex(self, listIndex):
+        return self.cellListIndex
 
     def __str__(self):
         myStr = ""
