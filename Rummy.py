@@ -2,7 +2,7 @@ import sys, random
 from PyQt5 import QtGui, QtCore
 
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QTreeView, QFileSystemModel, QLineEdit, \
-    QLabel, QFrame, QTextEdit, QHBoxLayout, QGridLayout, QVBoxLayout, QMainWindow, QFontComboBox, QPlainTextEdit
+    QLabel, QFrame, QTextEdit, QHBoxLayout, QGridLayout, QVBoxLayout, QMainWindow, QFontComboBox, QPlainTextEdit, QColorDialog
 
 from PyQt5.QtGui import QFont, QColor
 
@@ -79,19 +79,15 @@ class RummyTile(QWidget):
         self.labelText = "hello world"
 
     def mousePressEvent(self, event):
-        # itemData = QtCore.QByteArray()
-        # dataStream = QtCore.QDataStream(itemData, QtCore.QIODevice.WriteOnly)
-        # dataStream << QtCore.QByteArray(self.labelText) << QtCore.QPoint(event.pos() - self.rect().topLeft())
-        #
+        print("mouse press event: start")
         mimeData = QtCore.QMimeData()
         mimeData.setText("hello world")
-        # mimeData.setData('application/x-fridgemagnet', 0)
-        # mimeData.setText(self.cellListIndex)
 
         drag = QtGui.QDrag(self)
         drag.setMimeData(mimeData)
         drag.setHotSpot(event.pos() - self.rect().topLeft())
         drag.setPixmap(self.tileLabel.pixmap())
+        print("mouse press event: gameBoard.setStartCellIndex = ", str(self.cellListIndex))
         gameBoard.setStartCellIndex(self.cellListIndex)
         gameBoard.removeTile(self.cellListIndex)
         self.hide()
@@ -100,7 +96,7 @@ class RummyTile(QWidget):
             self.close()
         else:
             self.show()
-
+        print("mouse press event: end")
     def getColor(self):
         return self.color
 
@@ -169,11 +165,19 @@ class ControlPanel(QFrame):
         self.addTileButton = QPushButton("Take Tile")
         self.addTileButton.clicked.connect(self.takeTile)
 
-        self.addExitButton = QPushButton("Exit")
-        self.addExitButton.clicked.connect(self.Exit)
+        self.ExitButton = QPushButton("Exit")
+        self.ExitButton.clicked.connect(self.Exit)
+
+        self.ChangeBackgroundColorButton = QPushButton("Bg Color")
+        self.ChangeBackgroundColorButton.clicked.connect(self.ChangeBackgroundColor)
+
+        self.ChangeForegroundColorButton = QPushButton("Fg Color")
+        self.ChangeForegroundColorButton.clicked.connect(self.ChangeForegroundColor)
 
         self.buttonBar.addWidget(self.addTileButton)
-        self.buttonBar.addWidget(self.addExitButton)
+        self.buttonBar.addWidget(self.ExitButton)
+        self.buttonBar.addWidget(self.ChangeBackgroundColorButton)
+        self.buttonBar.addWidget(self.ChangeForegroundColorButton)
 
         self.layout.addLayout(self.buttonBar)
         self.infoBar = QVBoxLayout()
@@ -206,6 +210,14 @@ class ControlPanel(QFrame):
         tempStr = str(NoOfTiles) + " tiles left in bag"
         self.tilesLeftInfoBox.setPlainText(tempStr)
 
+    def ChangeBackgroundColor(self):
+        color = QColorDialog.getColor(QColor('#888844'))
+        gameBoard.setBackgroundColor(color)
+
+    def ChangeForegroundColor(self):
+        color = QColorDialog.getColor()
+        gameBoard.setForegroundColor(color)
+
 
 
 class BoardCell(QFrame):
@@ -222,10 +234,10 @@ class BoardCell(QFrame):
         self.col = col
         self.cellListIndex = 0
 
-        pal = self.palette()
-        pal.setColor(self.backgroundRole(), QColor('#888844'))
-        pal.setColor(self.foregroundRole(), QColor('#999955'))  # 6600cc
-        self.setPalette(pal)
+        self.pal = self.palette()
+        self.pal.setColor(self.backgroundRole(), QColor('#888844'))
+        self.pal.setColor(self.foregroundRole(), QColor('#999955'))  # 6600cc
+        self.setPalette(self.pal)
         self.setAutoFillBackground(True)
 
         self.setMouseTracking(True)
@@ -237,10 +249,6 @@ class BoardCell(QFrame):
 
     def getCellListIndex(self):
         return self.cellListIndex
-
-    def mousePressEvent(self, QMouseEvent):
-        print(QMouseEvent.pos())
-        self.getCellStatus()
 
     def enterEvent(self, a0: QtCore.QEvent):
         print("Mouse entered", self.row, self.col)
@@ -263,6 +271,13 @@ class BoardCell(QFrame):
                     child.widget().deleteLater()
         self.getCellStatus()
 
+    def setBackgroundColor(self, color):
+        self.pal.setColor(self.backgroundRole(), QColor(color))
+        self.setPalette(self.pal)
+
+    def setForegroundColor(self, color):
+        self.pal.setColor(self.foregroundRole(), QColor(color))
+        self.setPalette(self.pal)
 
     def getCellStatus(self):
         cellContents = self.findChild(RummyTile)
@@ -278,6 +293,7 @@ class BoardCell(QFrame):
         return self.row, self.col
 
     def dragEnterEvent(self, event):
+        print("dragEnterEvent: start")
         if event.mimeData().hasFormat('application/x-fridgemagnet'):
             if event.source() in self.children():
                 event.setDropAction(QtCore.Qt.MoveAction)
@@ -292,23 +308,24 @@ class BoardCell(QFrame):
     dragMoveEvent = dragEnterEvent
 
     def dropEvent(self, event):
+        print("dropEvent: start")
         if event.mimeData().hasFormat('text/plain'):
             mime = event.mimeData()
             sourceIndex = gameBoard.getStartCellIndex()
+            sourceTileValue = gameBoard.cellList[sourceIndex].getResidentTileValue()
+            print("dropEvent: sourceIndex = ", sourceIndex)
+
             if self.residentTile != []:
                 # the cell we are dropping onto already contains a tile. So we want to put this tile into
                 # the cell where the drag started. Thereby swapping the tiles
+                print("dropEvent: the destination cell already contains a tile:- ", self.residentTile[0], str(self.residentTile[1]))
                 newTile = RummyTile(self.residentTile[0], self.residentTile[1])
                 gameBoard.cellList[sourceIndex].addTile(newTile)
+                self.removeTile()
 
-
-            # newLabel = RummyTile.DragLabel(text, self)
-
-            sourceTileValue = gameBoard.cellList[sourceIndex].getResidentTileValue()
             newTile = RummyTile(sourceTileValue[0], sourceTileValue[1])
+            self.addTile(newTile)
             newTile.setCellListIndex(self.cellListIndex)
-            # gameBoard.cellList[gameBoard.getStartCellIndex()].removeTile()
-            self.layout.addWidget(newTile)
 
 
             if event.source() in self.children():
@@ -316,38 +333,70 @@ class BoardCell(QFrame):
                 event.accept()
             else:
                 event.acceptProposedAction()
-        elif event.mimeData().hasText():
-            pieces = event.mimeData().text().split()
-            position = event.pos()
-
-            for piece in pieces:
-                newLabel = RummyTile.DragLabel(piece, self)
-                newLabel.move(position)
-                newLabel.show()
-
-                position += QtCore.QPoint(newLabel.width(), 0)
-
-            event.acceptProposedAction()
+        # elif event.mimeData().hasText():
+            # pieces = event.mimeData().text().split()
+            # position = event.pos()
+            #
+            # for piece in pieces:
+            #     newLabel = RummyTile.DragLabel(piece, self)
+            #     newLabel.move(position)
+            #     newLabel.show()
+            #
+            #     position += QtCore.QPoint(newLabel.width(), 0)
+            #
+            # event.acceptProposedAction()
         else:
             event.ignore()
 
-class GameBoard(QFrame):
-    def __init__(self):
-        super(GameBoard, self).__init__()
+class TileGridBaseClass(QFrame):
+    def __init__(self, rows, cols):
+        super(TileGridBaseClass, self).__init__()
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.tileGrid = QGridLayout()
         self.tileGrid.setHorizontalSpacing(0)
         self.tileGrid.setVerticalSpacing(0)
-        self.rows = 8
-        self.cols = 30
+        self.rows = rows
+        self.cols = cols
         self.cellList = []
         self.startCellIndex = 0 #the index of the cell from where the drag started
 
-        pal = self.palette()
-        pal.setColor(self.backgroundRole(), QColor('#888844'))
-        pal.setColor(self.foregroundRole(), QColor('#888844'))  # 6600cc
-        self.setPalette(pal)
+        self.pal = self.palette()
+        self.pal.setColor(self.backgroundRole(), QColor('#888844'))
+        self.pal.setColor(self.foregroundRole(), QColor('#888844'))  # 6600cc
+        self.setPalette(self.pal)
         self.setAutoFillBackground(True)
+
+    def setBackgroundColor(self, color):
+        self.pal.setColor(self.backgroundRole(), QColor(color))
+        self.setPalette(self.pal)
+        for cell in self.cellList:
+            cell.setBackgroundColor(color)
+
+
+    def setForegroundColor(self, color):
+        self.pal.setColor(self.foregroundRole(), QColor(color))
+        self.setPalette(self.pal)
+        for cell in self.cellList:
+            cell.setForegroundColor(color)
+
+
+class GameBoard(TileGridBaseClass):
+    def __init__(self):
+        super(GameBoard, self).__init__(8, 8)
+        # self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        # self.tileGrid = QGridLayout()
+        # self.tileGrid.setHorizontalSpacing(0)
+        # self.tileGrid.setVerticalSpacing(0)
+        # self.rows = 8
+        # self.cols = 8
+        # self.cellList = []
+        # self.startCellIndex = 0 #the index of the cell from where the drag started
+        #
+        # pal = self.palette()
+        # pal.setColor(self.backgroundRole(), QColor('#888844'))
+        # pal.setColor(self.foregroundRole(), QColor('#888844'))  # 6600cc
+        # self.setPalette(pal)
+        # self.setAutoFillBackground(True)
 
         for row in range(self.rows):
             for col in range(self.cols):
@@ -355,22 +404,6 @@ class GameBoard(QFrame):
                 newCell.setCellListIndex(len(self.cellList))
                 self.tileGrid.addWidget(newCell, row, col)  # i=row j=col
                 self.cellList.append(newCell)
-
-
-        # for tileColor in tileColors:
-        #     for tileVal in tileValues:
-        #         newCell = BoardCell(row, col)
-        #         newCell.addTile(RummyTile(tileColor, tileVal))
-        #         self.tileGrid.addWidget(newCell, row, col)  # i=row j=col
-        #         col = col + 1
-        #     row = row + 1
-        #     col = 0
-
-        # for n in range(10):
-        #     newCell = BoardCell(row, col)
-        #     newCell.addTile(tileBag.getTileFromBag())
-        #     self.tileGrid.addWidget(newCell, row, col)
-        #     col += 1
 
         self.setLayout(self.tileGrid)
         self.listItems()
@@ -406,6 +439,7 @@ class GameBoard(QFrame):
 
     def getStartCellIndex(self):
         return self.startCellIndex
+
 
 
 class PlayerGrid(QFrame):
